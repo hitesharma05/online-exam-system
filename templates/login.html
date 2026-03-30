@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+
+{% block auth_content %}
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-logo">
+            <div class="auth-logo-icon">📝</div>
+            <div class="auth-logo-title">ExamPro</div>
+            <div class="auth-logo-sub">Sign in to your account</div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">
+                        {% if category == 'success' %}✓{% else %}⚠{% endif %}
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="/login" id="loginForm" novalidate>
+            <div class="form-group">
+                <label class="form-label" for="username">Username</label>
+                <input class="form-control"
+                       type="text"
+                       id="username"
+                       name="username"
+                       placeholder="Enter your username"
+                       autocomplete="username"
+                       required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <div style="position:relative;">
+                    <input class="form-control"
+                           type="password"
+                           id="password"
+                           name="password"
+                           placeholder="Enter your password"
+                           autocomplete="current-password"
+                           style="padding-right:3rem;"
+                           required>
+                    <button type="button"
+                            onclick="togglePwd()"
+                            style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);
+                                   background:none;border:none;cursor:pointer;font-size:1rem;line-height:1;"
+                            aria-label="Toggle password visibility">
+                        👁
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:.5rem;">
+                Sign In →
+            </button>
+        </form>
+
+        <!-- Divider -->
+        <div style="display:flex;align-items:center;gap:.75rem;margin:1.25rem 0;">
+            <hr style="flex:1;border:none;border-top:1px solid var(--border);">
+            <span style="color:var(--text-muted);font-size:.82rem;">New to ExamPro?</span>
+            <hr style="flex:1;border:none;border-top:1px solid var(--border);">
+        </div>
+
+        <a href="/register" class="btn btn-secondary btn-full">Create a Free Account →</a>
+
+        <p style="text-align:center;margin-top:1rem;font-size:.75rem;color:var(--text-muted);">
+            Admin login: <strong>admin / admin123</strong>
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function togglePwd() {
+    const p = document.getElementById('password');
+    p.type = p.type === 'password' ? 'text' : 'password';
+}
+</script>
+{% endblock %}

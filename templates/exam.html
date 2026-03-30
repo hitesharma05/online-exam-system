@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Exam{% endblock %}
+{% block page_title %}📋 Exam in Progress{% endblock %}
+{% block page_subtitle %}Answer all questions, then submit{% endblock %}
+
+{% block content %}
+
+<!-- Exam Controls Bar -->
+<div style="display:flex;align-items:center;justify-content:space-between;
+            background:var(--surface);border:1px solid var(--border);
+            border-radius:var(--radius);padding:.85rem 1.25rem;
+            margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem;box-shadow:var(--shadow-sm);">
+
+    <div style="font-weight:700;color:var(--text-primary);">
+        📋 General Knowledge Exam &nbsp;
+        <span class="badge badge-primary">{{ questions|length }} Questions</span>
+    </div>
+
+    <div id="examTimer" class="exam-timer">⏱ 30:00</div>
+</div>
+
+<!-- Progress Bar -->
+<div style="margin-bottom:1.25rem;">
+    <div style="display:flex;justify-content:space-between;font-size:.8rem;color:var(--text-muted);margin-bottom:.4rem;">
+        <span>Progress</span>
+        <span id="progressText">0 / {{ questions|length }} answered</span>
+    </div>
+    <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+    </div>
+</div>
+
+<!-- Exam Form -->
+<form method="POST" action="/submit_exam" id="examForm">
+
+    {% for q in questions %}
+    <div class="exam-question-card" id="qcard_{{ q['id'] }}">
+        <div class="question-number">Question {{ loop.index }} of {{ questions|length }}</div>
+        <div class="question-text">{{ q["question"] }}</div>
+
+        {% for option in ["option1", "option2", "option3", "option4"] %}
+        <label class="option-label" id="lbl_{{ q['id'] }}_{{ option }}">
+            <input type="radio"
+                   name="q{{ q['id'] }}"
+                   value="{{ q[option] }}"
+                   data-qid="{{ q['id'] }}"
+                   onchange="onOptionSelect(this)">
+            {{ q[option] }}
+        </label>
+        {% endfor %}
+    </div>
+    {% endfor %}
+
+    <!-- Submit -->
+    <div style="text-align:center;padding:1.5rem 0 1rem;">
+        <button type="button" class="btn btn-success btn-lg" onclick="confirmSubmit()">
+            ✓ Submit Exam
+        </button>
+        <p style="font-size:.8rem;color:var(--text-muted);margin-top:.6rem;">
+            Make sure you've answered all questions before submitting.
+        </p>
+    </div>
+</form>
+
+<!-- Confirm Modal -->
+<div id="confirmModal" style="display:none;position:fixed;inset:0;
+     background:rgba(0,0,0,.55);z-index:999;
+     align-items:center;justify-content:center;">
+    <div style="background:var(--surface);border-radius:var(--radius-xl);
+                padding:2rem;max-width:420px;width:90%;box-shadow:var(--shadow-lg);
+                animation:fadeUp .25s ease;">
+        <h2 style="font-size:1.25rem;font-weight:800;margin-bottom:.5rem;">Submit Exam?</h2>
+        <p id="modalMsg" style="color:var(--text-secondary);font-size:.9rem;margin-bottom:1.5rem;"></p>
+        <div style="display:flex;gap:.75rem;justify-content:flex-end;">
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-success" onclick="document.getElementById('examForm').submit()">Yes, Submit</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const TOTAL    = {{ questions|length }};
+const DURATION = 30 * 60; // 30 minutes in seconds
+let   answered = {};
+let   timeLeft = DURATION;
+
+/* ── Timer ── */
+const timerEl = document.getElementById('examTimer');
+
+function formatTime(s) {
+    const m = Math.floor(s / 60).toString().padStart(2, '0');
+    const sec = (s % 60).toString().padStart(2, '0');
+    return `⏱ ${m}:${sec}`;
+}
+
+const countdown = setInterval(() => {
+    timeLeft--;
+    timerEl.textContent = formatTime(timeLeft);
+
+    if (timeLeft <= 300)  timerEl.className = 'exam-timer warning';   // 5 min
+    if (timeLeft <= 60)   timerEl.className = 'exam-timer danger';    // 1 min
+    if (timeLeft <= 0) {
+        clearInterval(countdown);
+        timerEl.textContent = '⏱ 00:00';
+        alert('⏰ Time is up! Submitting your exam now.');
+        document.getElementById('examForm').submit();
+    }
+}, 1000);
+
+timerEl.textContent = formatTime(DURATION);
+
+/* ── Option Selection Highlight ── */
+function onOptionSelect(input) {
+    const qid = input.dataset.qid;
+
+    // Remove selected from all labels in this question
+    document.querySelectorAll(`[id^="lbl_${qid}_"]`).forEach(l => l.classList.remove('selected'));
+
+    // Mark parent label selected
+    input.closest('.option-label').classList.add('selected');
+
+    // Mark card as answered
+    document.getElementById(`qcard_${qid}`).classList.add('answered');
+
+    answered[qid] = true;
+    updateProgress();
+}
+
+function updateProgress() {
+    const count   = Object.keys(answered).length;
+    const pct     = Math.round((count / TOTAL) * 100);
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressText').textContent = `${count} / ${TOTAL} answered`;
+}
+
+/* ── Submit Confirmation ── */
+function confirmSubmit() {
+    const count    = Object.keys(answered).length;
+    const skipped  = TOTAL - count;
+    const modal    = document.getElementById('confirmModal');
+    const msg      = document.getElementById('modalMsg');
+
+    if (skipped > 0) {
+        msg.innerHTML = `<strong style="color:var(--warning);">⚠ ${skipped} question(s) unanswered.</strong><br>
+                         Unanswered questions will be marked incorrect. Are you sure you want to submit?`;
+    } else {
+        msg.innerHTML = `✅ All <strong>${TOTAL}</strong> questions answered. Ready to submit!`;
+    }
+
+    modal.style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('confirmModal').style.display = 'none';
+}
+</script>
+{% endblock %}

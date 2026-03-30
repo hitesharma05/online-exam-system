@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel{% endblock %}
+{% block page_title %}⚙️ Admin Panel{% endblock %}
+{% block page_subtitle %}Manage questions and monitor student performance{% endblock %}
+
+{% block content %}
+
+<!-- Stats Row -->
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon blue">❓</div>
+        <div>
+            <div class="stat-value">{{ questions|length }}</div>
+            <div class="stat-label">Total Questions</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon yellow">📋</div>
+        <div>
+            <div class="stat-value">{{ results|length }}</div>
+            <div class="stat-label">Total Attempts</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green">✅</div>
+        <div>
+            <div class="stat-value">
+                {% if results %}
+                    {{ "%.1f"|format(results | map(attribute='percentage') | sum / results|length) }}%
+                {% else %}—{% endif %}
+            </div>
+            <div class="stat-label">Avg Score</div>
+        </div>
+    </div>
+</div>
+
+<!-- Two-column grid -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;align-items:start;">
+
+    <!-- ── Add Question Form ── -->
+    <div class="card">
+        <div class="section-header" style="margin-bottom:1rem;">
+            <div>
+                <div class="card-title">➕ Add New Question</div>
+                <div class="card-subtitle">Fill all fields and select the correct answer</div>
+            </div>
+        </div>
+
+        <form method="POST" id="addQForm" onsubmit="return validateForm()">
+            <div class="form-group">
+                <label class="form-label" for="question">Question Text</label>
+                <input class="form-control" type="text" id="question"
+                       name="question" placeholder="Enter the question" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="o1">Option 1</label>
+                <input class="form-control" type="text" id="o1"
+                       name="o1" placeholder="Option A" required oninput="syncOptions()">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="o2">Option 2</label>
+                <input class="form-control" type="text" id="o2"
+                       name="o2" placeholder="Option B" required oninput="syncOptions()">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="o3">Option 3</label>
+                <input class="form-control" type="text" id="o3"
+                       name="o3" placeholder="Option C" required oninput="syncOptions()">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="o4">Option 4</label>
+                <input class="form-control" type="text" id="o4"
+                       name="o4" placeholder="Option D" required oninput="syncOptions()">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="correct">Correct Answer</label>
+                <select class="form-control" name="correct" id="correctSelect" required>
+                    <option value="">-- Select the correct option --</option>
+                </select>
+                <p style="font-size:.75rem;color:var(--text-muted);margin-top:.3rem;">
+                    Options appear here as you type them above.
+                </p>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full">💾 Save Question</button>
+        </form>
+    </div>
+
+    <!-- ── Student Results ── -->
+    <div class="card" style="overflow:hidden;padding:0;">
+        <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);">
+            <div class="card-title">📊 Student Performance</div>
+            <div class="card-subtitle">All exam submissions</div>
+        </div>
+
+        {% if results %}
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Score</th>
+                        <th>%</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in results %}
+                    <tr>
+                        <td style="font-weight:600;">{{ r.username }}</td>
+                        <td>{{ r.score }}/{{ r.total_questions }}</td>
+                        <td style="font-weight:700;color:{{ 'var(--success)' if r.percentage >= 50 else 'var(--danger)' }};">
+                            {{ "%.1f"|format(r.percentage) }}%
+                        </td>
+                        <td>
+                            <span class="badge {{ 'badge-pass' if r.percentage >= 50 else 'badge-fail' }}">
+                                {{ 'Pass' if r.percentage >= 50 else 'Fail' }}
+                            </span>
+                        </td>
+                        <td style="font-size:.78rem;color:var(--text-muted);">{{ r.submitted_at }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:2rem;">
+            <div class="empty-state-icon">📭</div>
+            <div class="empty-state-title">No results yet</div>
+            <div class="empty-state-text">Student submissions will appear here.</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ── Question Bank ── -->
+<div style="margin-top:1.5rem;">
+    <div class="section-header">
+        <div>
+            <div class="section-title">Question Bank</div>
+            <div class="section-subtitle">{{ questions|length }} questions currently active</div>
+        </div>
+    </div>
+
+    {% if questions %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Question</th>
+                    <th>Correct Answer</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for q in questions %}
+                <tr>
+                    <td style="font-weight:700;color:var(--text-muted);">{{ loop.index }}</td>
+                    <td style="font-weight:600;max-width:320px;">{{ q.question }}</td>
+                    <td style="color:var(--success);font-weight:600;">{{ q.correct_answer }}</td>
+                    <td>
+                        <form method="POST" action="/admin/delete_question/{{ q.id }}"
+                              onsubmit="return confirm('Delete this question?')">
+                            <button type="submit" class="btn btn-danger btn-sm">🗑 Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <div class="empty-state-icon">❓</div>
+            <div class="empty-state-title">No questions yet</div>
+            <div class="empty-state-text">Add your first question using the form above.</div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* Sync correct-answer dropdown with option inputs */
+function syncOptions() {
+    const sel = document.getElementById('correctSelect');
+    const vals = ['o1','o2','o3','o4'].map(id => document.getElementById(id).value.trim());
+    const prev = sel.value;
+
+    // Rebuild options
+    sel.innerHTML = '<option value="">-- Select the correct option --</option>';
+    vals.forEach((v, i) => {
+        if (v) {
+            const opt  = document.createElement('option');
+            opt.value = v;
+            opt.textContent = `Option ${i+1}: ${v}`;
+            if (v === prev) opt.selected = true;
+            sel.appendChild(opt);
+        }
+    });
+}
+
+function validateForm() {
+    const sel = document.getElementById('correctSelect');
+    if (!sel.value) {
+        alert('Please select the correct answer before saving.');
+        sel.focus();
+        return false;
+    }
+    return true;
+}
+
+// Responsive admin grid
+function adjustGrid() {
+    const grid = document.querySelector('[style*="grid-template-columns:1fr 1fr"]');
+    if (grid && window.innerWidth < 900) {
+        grid.style.gridTemplateColumns = '1fr';
+    } else if (grid) {
+        grid.style.gridTemplateColumns = '1fr 1fr';
+    }
+}
+window.addEventListener('resize', adjustGrid);
+adjustGrid();
+</script>
+{% endblock %}

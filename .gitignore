@@ -1,0 +1,26 @@
+# Python bytecode cache — auto-generated, never commit
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+
+# SQLite database — contains user data, exclude from VCS
+*.db
+*.sqlite3
+
+# Environment / secrets
+.env
+.env.*
+*.env
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor metadata
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

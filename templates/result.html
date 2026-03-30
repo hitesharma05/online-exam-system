@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Result{% endblock %}
+{% block page_title %}Exam Result{% endblock %}
+{% block page_subtitle %}Here's how you did!{% endblock %}
+
+{% block content %}
+
+<!-- Score Card -->
+<div class="card" style="text-align:center;margin-bottom:1.5rem;">
+
+    <div class="score-circle-wrap">
+        <div class="score-circle">
+            <svg width="160" height="160" viewBox="0 0 160 160">
+                <circle class="score-circle-track" cx="80" cy="80" r="68"/>
+                <circle class="score-circle-fill {{ 'pass' if percentage >= 50 else 'fail' }}"
+                        id="scoreArc"
+                        cx="80" cy="80" r="68"
+                        stroke-dasharray="427.26"
+                        stroke-dashoffset="427.26"/>
+            </svg>
+            <div class="score-number">
+                <span class="score-pct" id="scoreDisplay">0%</span>
+                <span class="score-label">Score</span>
+            </div>
+        </div>
+
+        <div class="score-result-badge badge {{ 'badge-pass' if percentage >= 50 else 'badge-fail' }}"
+             style="font-size:1.1rem;margin-top:1rem;">
+            {{ '🎉 PASSED' if percentage >= 50 else '❌ FAILED' }}
+        </div>
+
+        <div style="display:flex;gap:2rem;margin-top:1.25rem;flex-wrap:wrap;justify-content:center;">
+            <div>
+                <div style="font-size:1.8rem;font-weight:800;color:var(--primary);">{{ score }}/{{ total }}</div>
+                <div style="font-size:.78rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;">Correct</div>
+            </div>
+            <div style="border-left:1px solid var(--border);"></div>
+            <div>
+                <div style="font-size:1.8rem;font-weight:800;color:var(--danger);">{{ total - score }}</div>
+                <div style="font-size:.78rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;">Wrong</div>
+            </div>
+            <div style="border-left:1px solid var(--border);"></div>
+            <div>
+                <div style="font-size:1.8rem;font-weight:800;color:var(--success);">{{ "%.1f"|format(percentage) }}%</div>
+                <div style="font-size:.78rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;">Percentage</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;padding-top:1rem;border-top:1px solid var(--border);">
+        <a href="/dashboard" class="btn btn-secondary">🏠 Dashboard</a>
+        <a href="/results"   class="btn btn-secondary">📊 History</a>
+        <a href="/exam"      class="btn btn-primary">🔄 Try Again</a>
+    </div>
+</div>
+
+<!-- Answer Review Section -->
+<div class="section-header">
+    <div>
+        <div class="section-title">Answer Review</div>
+        <div class="section-subtitle">See which questions you got right and wrong</div>
+    </div>
+</div>
+
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Question</th>
+                <th>Your Answer</th>
+                <th>Correct Answer</th>
+                <th>Result</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in review %}
+            <tr class="{{ 'review-correct' if r.is_correct else 'review-wrong' }}">
+                <td style="font-weight:700;color:var(--text-muted);">{{ loop.index }}</td>
+                <td style="font-weight:600;color:var(--text-primary);max-width:320px;">{{ r.question }}</td>
+                <td>{{ r.your_answer }}</td>
+                <td style="color:var(--success);font-weight:600;">{{ r.correct_answer }}</td>
+                <td>
+                    {% if r.is_correct %}
+                        <span style="color:var(--success);font-size:1.1rem;font-weight:700;">✓ Correct</span>
+                    {% else %}
+                        <span style="color:var(--danger);font-size:1.1rem;font-weight:700;">✗ Wrong</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Animate score circle
+const pct        = {{ percentage }};
+const circumference = 427.26;
+const arc        = document.getElementById('scoreArc');
+const display    = document.getElementById('scoreDisplay');
+
+// Animate on load
+setTimeout(() => {
+    const offset = circumference - (pct / 100) * circumference;
+    arc.style.strokeDashoffset = offset;
+
+    // Animate number counter
+    let current = 0;
+    const step  = pct / 60;
+    const timer = setInterval(() => {
+        current = Math.min(current + step, pct);
+        display.textContent = current.toFixed(1) + '%';
+        if (current >= pct) clearInterval(timer);
+    }, 16);
+}, 200);
+</script>
+{% endblock %}

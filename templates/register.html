@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}Create Account{% endblock %}
+
+{% block auth_content %}
+<div class="auth-page">
+    <div class="auth-card" style="max-width:460px;">
+
+        <!-- Logo -->
+        <div class="auth-logo">
+            <div class="auth-logo-icon">📝</div>
+            <div class="auth-logo-title">Join ExamPro</div>
+            <div class="auth-logo-sub">Create your free student account</div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">
+                        {% if category == 'success' %}✓{% else %}⚠{% endif %}
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Sign-up Form -->
+        <form method="POST" action="/register" id="registerForm" novalidate>
+
+            <div class="form-group">
+                <label class="form-label" for="full_name">Full Name</label>
+                <input class="form-control"
+                       type="text"
+                       id="full_name"
+                       name="full_name"
+                       placeholder="Your full name"
+                       autocomplete="name"
+                       required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="username">Username</label>
+                <input class="form-control"
+                       type="text"
+                       id="username"
+                       name="username"
+                       placeholder="Choose a username (min. 3 chars)"
+                       autocomplete="username"
+                       required>
+                <div id="usernameHint" style="font-size:.75rem;color:var(--text-muted);margin-top:.3rem;"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <div style="position:relative;">
+                    <input class="form-control"
+                           type="password"
+                           id="password"
+                           name="password"
+                           placeholder="At least 6 characters"
+                           autocomplete="new-password"
+                           style="padding-right:3rem;"
+                           oninput="checkStrength(this.value)"
+                           required>
+                    <button type="button" onclick="togglePwd('password')"
+                            style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);
+                                   background:none;border:none;cursor:pointer;font-size:1rem;"
+                            aria-label="Toggle password">👁</button>
+                </div>
+                <!-- Password strength bar -->
+                <div style="margin-top:.4rem;">
+                    <div style="background:var(--border);border-radius:999px;height:4px;overflow:hidden;">
+                        <div id="strengthBar" style="height:100%;width:0%;border-radius:999px;
+                             transition:width .3s,background .3s;"></div>
+                    </div>
+                    <div id="strengthText" style="font-size:.72rem;color:var(--text-muted);margin-top:.2rem;"></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="confirm_password">Confirm Password</label>
+                <div style="position:relative;">
+                    <input class="form-control"
+                           type="password"
+                           id="confirm_password"
+                           name="confirm_password"
+                           placeholder="Re-enter your password"
+                           autocomplete="new-password"
+                           style="padding-right:3rem;"
+                           oninput="checkMatch()"
+                           required>
+                    <button type="button" onclick="togglePwd('confirm_password')"
+                            style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);
+                                   background:none;border:none;cursor:pointer;font-size:1rem;"
+                            aria-label="Toggle confirm password">👁</button>
+                </div>
+                <div id="matchHint" style="font-size:.75rem;margin-top:.3rem;"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full btn-lg"
+                    style="margin-top:.5rem;" id="submitBtn">
+                Create Account →
+            </button>
+        </form>
+
+        <!-- Divider -->
+        <div style="display:flex;align-items:center;gap:.75rem;margin:1.25rem 0;">
+            <hr style="flex:1;border:none;border-top:1px solid var(--border);">
+            <span style="color:var(--text-muted);font-size:.82rem;">Already have an account?</span>
+            <hr style="flex:1;border:none;border-top:1px solid var(--border);">
+        </div>
+
+        <a href="/login" class="btn btn-secondary btn-full">Sign In Instead</a>
+
+        <p style="text-align:center;margin-top:1rem;font-size:.75rem;color:var(--text-muted);">
+            By signing up you agree to use this platform for educational purposes only.
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* Toggle show/hide password */
+function togglePwd(id) {
+    const el = document.getElementById(id);
+    el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+/* Password strength indicator */
+function checkStrength(val) {
+    const bar  = document.getElementById('strengthBar');
+    const text = document.getElementById('strengthText');
+    let strength = 0;
+
+    if (val.length >= 6)  strength++;
+    if (val.length >= 10) strength++;
+    if (/[A-Z]/.test(val)) strength++;
+    if (/[0-9]/.test(val)) strength++;
+    if (/[^A-Za-z0-9]/.test(val)) strength++;
+
+    const levels = [
+        { label: '',         color: '',                  width: '0%'   },
+        { label: 'Weak',     color: 'var(--danger)',     width: '25%'  },
+        { label: 'Fair',     color: 'var(--warning)',    width: '50%'  },
+        { label: 'Good',     color: 'var(--secondary)',  width: '75%'  },
+        { label: 'Strong',   color: 'var(--success)',    width: '90%'  },
+        { label: 'Very Strong', color: 'var(--success)', width: '100%' },
+    ];
+
+    const lvl = levels[Math.min(strength, 5)];
+    bar.style.width      = lvl.width;
+    bar.style.background = lvl.color;
+    text.style.color     = lvl.color;
+    text.textContent     = lvl.label ? `Password strength: ${lvl.label}` : '';
+}
+
+/* Match check */
+function checkMatch() {
+    const pwd  = document.getElementById('password').value;
+    const conf = document.getElementById('confirm_password').value;
+    const hint = document.getElementById('matchHint');
+
+    if (!conf) { hint.textContent = ''; return; }
+
+    if (pwd === conf) {
+        hint.textContent = '✓ Passwords match';
+        hint.style.color = 'var(--success)';
+    } else {
+        hint.textContent = '✗ Passwords do not match';
+        hint.style.color = 'var(--danger)';
+    }
+}
+
+/* Client-side validation before submit */
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    const pwd  = document.getElementById('password').value;
+    const conf = document.getElementById('confirm_password').value;
+    const user = document.getElementById('username').value.trim();
+
+    if (user.length < 3) {
+        e.preventDefault();
+        alert('Username must be at least 3 characters.');
+        return;
+    }
+    if (pwd.length < 6) {
+        e.preventDefault();
+        alert('Password must be at least 6 characters.');
+        return;
+    }
+    if (pwd !== conf) {
+        e.preventDefault();
+        alert('Passwords do not match.');
+        return;
+    }
+});
+</script>
+{% endblock %}

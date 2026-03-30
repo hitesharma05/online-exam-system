@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ExamPro{% endblock %} — Online Exam System</title>
+    <meta name="description" content="ExamPro — Secure Online Examination System for students and administrators.">
+    <link rel="stylesheet" href="/static/style.css">
+    {% block head %}{% endblock %}
+</head>
+<body>
+
+{% if session.get('user_id') %}
+<!-- ── Sidebar Overlay (mobile) ── -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar" id="sidebar">
+    <a href="{% if session.get('role') == 'admin' %}/admin{% else %}/dashboard{% endif %}" class="sidebar-logo">
+        <div class="sidebar-logo-icon">📝</div>
+        <span class="sidebar-logo-text">ExamPro</span>
+    </a>
+
+    <div class="sidebar-user">
+        <div class="sidebar-user-role">{{ session.get('role', 'user') | capitalize }}</div>
+        <div class="sidebar-user-name">{{ session.get('full_name') or session.get('username', '') }}</div>
+        <div style="font-size:.72rem;color:var(--sidebar-text);opacity:.6;margin-top:1px;">@{{ session.get('username', '') }}</div>
+    </div>
+
+    <ul class="sidebar-nav">
+        {% if session.get('role') == 'admin' %}
+            <li><a href="/admin" class="{{ 'active' if request.path == '/admin' else '' }}">
+                <span class="nav-icon">⚙️</span> Admin Dashboard
+            </a></li>
+        {% else %}
+            <li><a href="/dashboard" class="{{ 'active' if request.path == '/dashboard' else '' }}">
+                <span class="nav-icon">🏠</span> Dashboard
+            </a></li>
+            <li><a href="/exam" class="{{ 'active' if request.path == '/exam' else '' }}">
+                <span class="nav-icon">📋</span> Take Exam
+            </a></li>
+            <li><a href="/results" class="{{ 'active' if request.path == '/results' else '' }}">
+                <span class="nav-icon">📊</span> My Results
+            </a></li>
+        {% endif %}
+    </ul>
+
+    <div class="sidebar-footer">
+        <a href="/logout">🚪 Logout</a>
+    </div>
+</aside>
+
+<!-- ── Main Content ── -->
+<div class="app-shell">
+    <div class="main-content">
+        <header class="topbar">
+            <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Toggle menu">
+                <span></span><span></span><span></span>
+            </button>
+            <div>
+                <div class="topbar-title">{% block page_title %}ExamPro{% endblock %}</div>
+                <div class="topbar-sub">{% block page_subtitle %}Online Examination System{% endblock %}</div>
+            </div>
+            <div></div>
+        </header>
+
+        <main class="page-body">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">
+                            {% if category == 'success' %}✓{% else %}⚠{% endif %}
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</div>
+
+{% else %}
+{% block auth_content %}{% endblock %}
+{% endif %}
+
+<script>
+    function toggleSidebar() {
+        const s = document.getElementById('sidebar');
+        const o = document.getElementById('sidebarOverlay');
+        if (s) s.classList.toggle('open');
+        if (o) o.classList.toggle('show');
+    }
+    function closeSidebar() {
+        const s = document.getElementById('sidebar');
+        const o = document.getElementById('sidebarOverlay');
+        if (s) s.classList.remove('open');
+        if (o) o.classList.remove('show');
+    }
+</script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

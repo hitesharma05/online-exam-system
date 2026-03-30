@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Welcome back, {{ username }}! 👋{% endblock %}
+
+{% block content %}
+
+<!-- Stats Row -->
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon blue">📋</div>
+        <div>
+            <div class="stat-value">{{ total_exams }}</div>
+            <div class="stat-label">Exams Taken</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green">🏆</div>
+        <div>
+            <div class="stat-value">{{ best_score }}%</div>
+            <div class="stat-label">Best Score</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon yellow">📈</div>
+        <div>
+            <div class="stat-value">{{ avg_score }}%</div>
+            <div class="stat-label">Avg Score</div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Cards -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem;">
+
+    <div class="card" style="border-top:4px solid var(--primary);">
+        <div style="font-size:2.5rem;margin-bottom:.75rem;">📝</div>
+        <div class="card-title">Take an Exam</div>
+        <div class="card-subtitle">Answer all questions carefully and submit when ready.</div>
+        <a href="/exam" class="btn btn-primary">Start Exam →</a>
+    </div>
+
+    <div class="card" style="border-top:4px solid var(--success);">
+        <div style="font-size:2.5rem;margin-bottom:.75rem;">📊</div>
+        <div class="card-title">View My Results</div>
+        <div class="card-subtitle">Check your past exam scores and performance history.</div>
+        <a href="/results" class="btn btn-success">View Results →</a>
+    </div>
+
+</div>
+
+{% if total_exams == 0 %}
+<div style="margin-top:2rem;" class="card">
+    <div class="empty-state">
+        <div class="empty-state-icon">🎯</div>
+        <div class="empty-state-title">Ready for your first exam?</div>
+        <div class="empty-state-text">No exam history yet. Click "Start Exam" above to begin!</div>
+        <a href="/exam" class="btn btn-primary">Start My First Exam</a>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

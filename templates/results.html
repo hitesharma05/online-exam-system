@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}My Results{% endblock %}
+{% block page_title %}📊 My Results{% endblock %}
+{% block page_subtitle %}Your exam history and performance{% endblock %}
+
+{% block content %}
+
+{% if results %}
+<!-- Summary Stats -->
+<div class="stats-row" style="margin-bottom:1.5rem;">
+    <div class="stat-card">
+        <div class="stat-icon blue">📋</div>
+        <div>
+            <div class="stat-value">{{ results|length }}</div>
+            <div class="stat-label">Total Attempts</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green">🏆</div>
+        <div>
+            <div class="stat-value">{{ best_score }}%</div>
+            <div class="stat-label">Best Score</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon yellow">📈</div>
+        <div>
+            <div class="stat-value">{{ avg_score }}%</div>
+            <div class="stat-label">Average Score</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green">✅</div>
+        <div>
+            <div class="stat-value">
+                {{ results | selectattr('percentage', 'ge', 50) | list | length }}
+            </div>
+            <div class="stat-label">Exams Passed</div>
+        </div>
+    </div>
+</div>
+
+<!-- Results Table -->
+<div class="section-header">
+    <div>
+        <div class="section-title">Attempt History</div>
+        <div class="section-subtitle">Most recent first</div>
+    </div>
+    <a href="/exam" class="btn btn-primary btn-sm">📝 Take New Exam</a>
+</div>
+
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Score</th>
+                <th>Total Qs</th>
+                <th>Percentage</th>
+                <th>Status</th>
+                <th>Date &amp; Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in results %}
+            <tr>
+                <td style="font-weight:700;color:var(--text-muted);">{{ loop.index }}</td>
+                <td style="font-weight:700;">{{ r["score"] }}</td>
+                <td>{{ r["total_questions"] }}</td>
+                <td style="font-weight:700;color:{{ 'var(--success)' if r['percentage'] >= 50 else 'var(--danger)' }};">
+                    {{ "%.1f"|format(r["percentage"]) }}%
+                </td>
+                <td>
+                    <span class="badge {{ 'badge-pass' if r['percentage'] >= 50 else 'badge-fail' }}">
+                        {{ 'Pass' if r['percentage'] >= 50 else 'Fail' }}
+                    </span>
+                </td>
+                <td style="color:var(--text-muted);font-size:.82rem;">{{ r["submitted_at"] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <div class="empty-state-title">No exams taken yet</div>
+        <div class="empty-state-text">Your results will appear here after you complete an exam.</div>
+        <a href="/exam" class="btn btn-primary">Take My First Exam →</a>
+    </div>
+</div>
+{% endif %}
+
+<div style="margin-top:1.25rem;">
+    <a href="/dashboard" class="btn btn-secondary btn-sm">← Back to Dashboard</a>
+</div>
+
+{% endblock %}
